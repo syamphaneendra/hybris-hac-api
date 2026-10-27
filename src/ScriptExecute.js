@@ -1,39 +1,19 @@
-const querystring = require("querystring");
-const hac = require("./HACApiConnect");
+'use strict';
 
-exports.scriptExecute = async function (
-  script,
-  commit = "true",
-  scriptType = "groovy"
-) {
-  await hac.login();
+/** Legacy shim: `require('hybris-hac-api/src/ScriptExecute')` → `{ scriptExecute }`. */
 
-  const scriptData = querystring.stringify({
-    script: script,
-    scriptType: scriptType,
-    commit: commit,
-  });
+const legacy = require('./legacy');
 
-  let url =
-    process.env.HYBRIS_VERSION < 5.7
-      ? `/hac/console/${scriptType}/execute`
-      : "/hac/console/scripting/execute";
+/**
+ * @param {string} script
+ * @param {string|boolean} [commit] default "true"
+ * @param {string} [scriptType] default "groovy"
+ * @returns {Promise<Record<string, any>>}
+ */
+function scriptExecute(script, commit = 'true', scriptType = 'groovy') {
+  return legacy.executeScript(script, commit, scriptType);
+}
 
-  const executeScript = await global.instance({
-    method: "post",
-    url: url,
-    data: scriptData,
-    headers: {
-      Cookie: jSession,
-      "X-CSRF-TOKEN": csrfToken,
-    },
-  });
-
-  const result = executeScript.data;
-
-  if (!result || result.stacktraceText !== "") {
-    throw new Error(`HAC Script error occurred:\n ${result.stacktraceText}`);
-  }
-
-  return result;
+module.exports = {
+  scriptExecute,
 };
