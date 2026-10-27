@@ -1,43 +1,17 @@
-const querystring = require("querystring");
-const he = require("he");
-const hac = require("./HACApiConnect");
+'use strict';
 
-exports.flexibleSearchExecute = async function (query) {
-  await hac.login();
+/** Legacy shim: `require('hybris-hac-api/src/FlexibleSearchExecute')` → `{ flexibleSearchExecute }`. */
 
-  const queryData = querystring.stringify({
-    flexibleSearchQuery: query,
-    sqlQuery: "",
-    maxCount: "200",
-    user: "admin",
-    locale: "en",
-    commit: "false",
-  });
+const legacy = require('./legacy');
 
-  const executeQuery = await global.instance({
-    method: "post",
-    url: "/hac/console/flexsearch/execute",
-    data: queryData,
-    headers: {
-      Cookie: jSession,
-      "X-CSRF-TOKEN": csrfToken,
-    },
-  });
+/**
+ * @param {string} query
+ * @returns {Promise<Record<string, string>>}
+ */
+function flexibleSearchExecute(query) {
+  return legacy.flexibleSearch(query);
+}
 
-  const result = executeQuery.data;
-
-  if (!result || !result.resultList || result.resultList.length === 0) {
-    throw new Error(`HAC Flexible Search returned 0 results:\n${query}`);
-  }
-
-  let resultMap = {};
-  const headers = result.headers;
-  const resultList = result.resultList[0];
-  headers.forEach(
-    (key, i) =>
-      (resultMap[key.replace("p_", "")] =
-        resultList[i] == null ? "" : he.decode(resultList[i]))
-  );
-
-  return resultMap;
+module.exports = {
+  flexibleSearchExecute,
 };
